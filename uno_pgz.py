@@ -435,7 +435,7 @@ class AIUnoGame:
             ' '.join(str(card) for card in self.player.hand)
         ))
 
-num_players = 3
+num_players = 2
 
 game = AIUnoGame(num_players)
 
@@ -464,6 +464,7 @@ def draw_deck():
         for i, card in enumerate(color_imgs.values()):
             card.pos = (290+i*80, 70)
             card.draw()
+    # used card
     elif current_card.color == 'black' and current_card.temp_color is not None:
         color_img = color_imgs[current_card.temp_color]
         color_img.pos = (290, 70)

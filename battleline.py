@@ -3,8 +3,14 @@
 # Press Shift+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 
+import pgzrun
 from random import shuffle, choice
 from itertools import product, repeat, chain
+from threading import Thread
+from time import sleep
+
+from pgzero import screen
+from pgzero.actor import Actor
 
 COLORS = ['eevee', 'vaporeon', 'jolteon', 'flareon', 'espeon', 'Umbreon']  # represent six different colors
 ALL_COLORS = COLORS + ['T']
@@ -144,7 +150,7 @@ class BattleField:
         self.env_condition = env
 
 
-class UnoGame:
+class BattleLineGame:
     """
     Represents an Uno game.
 
@@ -350,9 +356,9 @@ class ReversibleCycle:
         self._reverse = not self._reverse
 
 
-class AIUnoGame:
+class AIGame:
     def __init__(self, players):
-        self.game = UnoGame(players)
+        self.game = BattleLineGame(players)
         self.player = choice(self.game.players)
         self.player_index = self.game.players.index(self.player)
         print('The game begins. You are Player {}.'.format(self.player_index))
@@ -408,6 +414,115 @@ class AIUnoGame:
             ' '.join(str(card) for card in self.player.hand)
         ))
 
+
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
 
+class GameData:
+    def __init__(self):
+        self.selected_card = None
+        self.selected_color = None
+        self.color_selection_required = False
+        self.log = ''
 
+    @property
+    def selected_card(self):
+        selected_card = self._selected_card
+        self.selected_card = None
+        return selected_card
+
+    @selected_card.setter
+    def selected_card(self, value):
+        self._selected_card = value
+
+    @property
+    def selected_color(self):
+        selected_color = self._selected_color
+        self.selected_color = None
+        return selected_color
+
+    @selected_color.setter
+    def selected_color(self, value):
+        self._selected_color = value
+
+
+game_data = GameData()
+
+num_players = 2
+
+game = AIGame(num_players)
+
+WIDTH = 1200
+HEIGHT = 800
+
+deck_img = Actor('back')
+color_imgs = {color: Actor(color) for color in COLORS}
+
+
+def game_loop():
+    while game.game.is_active:
+        sleep(1)
+        next(game)
+
+
+game_loop_thread = Thread(target=game_loop)
+game_loop_thread.start()
+
+
+def draw_deck():
+    deck_img.pos = (130, 70)
+    deck_img.draw()
+    current_card = game.game.current_card
+    current_card.sprite.pos = (210, 70)
+    current_card.sprite.draw()
+    if game_data.color_selection_required:
+        for i, card in enumerate(color_imgs.values()):
+            card.pos = (290 + i * 80, 70)
+            card.draw()
+    elif current_card.color == 'black' and current_card.temp_color is not None:
+        color_img = color_imgs[current_card.temp_color]
+        color_img.pos = (290, 70)
+        color_img.draw()
+
+
+def draw_players_hands():
+    for p, player in enumerate(game.game.players):
+        color = 'red' if player == game.game.current_player else 'black'
+        text = 'P{} {}'.format(p, 'wins' if game.game.winner == player else '')
+        screen.draw.text(text, (0, 300 + p * 130), fontsize=100, color=color)
+        for c, card in enumerate(player.hand):
+            if player == game.player:
+                sprite = card.sprite
+            else:
+                sprite = Actor('back')
+            sprite.pos = (130 + c * 80, 330 + p * 130)
+            sprite.draw()
+
+
+def show_log():
+    screen.draw.text(game_data.log, midbottom=(WIDTH / 2, HEIGHT - 50), color='black')
+
+
+def update():
+    screen.clear()
+    screen.fill((255, 255, 255))
+    draw_deck()
+    draw_players_hands()
+    show_log()
+
+
+def on_mouse_down(pos):
+    if game.player == game.game.current_player:
+        for card in game.player.hand:
+            if card.sprite.collidepoint(pos):
+                game_data.selected_card = game.player.hand.index(card)
+                print('Selected card {} index {}'.format(card, game.player.hand.index(card)))
+        if deck_img.collidepoint(pos):
+            game_data.selected_card = False
+            print('Selected pick up')
+        for color, card in color_imgs.items():
+            if card.collidepoint(pos):
+                game_data.selected_color = color
+                game_data.color_selection_required = False
+
+
+pgzrun.go()
