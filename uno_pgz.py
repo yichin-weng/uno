@@ -4,7 +4,6 @@ from itertools import product, repeat, chain
 from threading import Thread
 from time import sleep
 
-
 from pgzero.actor import Actor
 
 COLORS = ['red', 'yellow', 'green', 'blue']
@@ -25,6 +24,7 @@ class UnoCard:
 
     >>> card = UnoCard('red', 5)
     """
+
     def __init__(self, color, card_type):
         self._validate(color, card_type)
         self.color = color
@@ -90,9 +90,9 @@ class UnoCard:
         otherwise return False
         """
         return (
-            self._color == other.color or
-            self.card_type == other.card_type or
-            other.color == 'black'
+                self._color == other.color or
+                self.card_type == other.card_type or
+                other.color == 'black'
         )
 
 
@@ -107,6 +107,7 @@ class UnoPlayer:
     >>> cards = [UnoCard('red', n) for n in range(7)]
     >>> player = UnoPlayer(cards)
     """
+
     def __init__(self, cards, player_id=None):
         if len(cards) != 7:
             raise ValueError(
@@ -148,6 +149,7 @@ class UnoGame:
 
     >>> game = UnoGame(5)
     """
+
     def __init__(self, players, random=True):
         if not isinstance(players, int):
             raise ValueError('Invalid game: players must be integer')
@@ -317,6 +319,7 @@ class ReversibleCycle:
     >>> next(rc)
     2
     """
+
     def __init__(self, iterable):
         self._items = list(iterable)
         self._pos = None
@@ -429,11 +432,11 @@ class AIUnoGame:
             game_data.log = "Player {} picked up".format(player)
             game.play(player=player_id, card=None)
 
-
     def print_hand(self):
         print('Your hand: {}'.format(
             ' '.join(str(card) for card in self.player.hand)
         ))
+
 
 num_players = 2
 
@@ -445,10 +448,12 @@ HEIGHT = 800
 deck_img = Actor('back')
 color_imgs = {color: Actor(color) for color in COLORS}
 
+
 def game_loop():
     while game.game.is_active:
         sleep(1)
         next(game)
+
 
 game_loop_thread = Thread(target=game_loop)
 game_loop_thread.start()
@@ -462,7 +467,7 @@ def draw_deck():
     current_card.sprite.draw()
     if game_data.color_selection_required:
         for i, card in enumerate(color_imgs.values()):
-            card.pos = (290+i*80, 70)
+            card.pos = (290 + i * 80, 70)
             card.draw()
     # used card
     elif current_card.color == 'black' and current_card.temp_color is not None:
@@ -470,21 +475,24 @@ def draw_deck():
         color_img.pos = (290, 70)
         color_img.draw()
 
+
 def draw_players_hands():
     for p, player in enumerate(game.game.players):
         color = 'red' if player == game.game.current_player else 'black'
         text = 'P{} {}'.format(p, 'wins' if game.game.winner == player else '')
-        screen.draw.text(text, (0, 300+p*130), fontsize=100, color=color)
+        screen.draw.text(text, (0, 300 + p * 130), fontsize=100, color=color)
         for c, card in enumerate(player.hand):
             if player == game.player:
                 sprite = card.sprite
             else:
                 sprite = Actor('back')
-            sprite.pos = (130+c*80, 330+p*130)
+            sprite.pos = (130 + c * 80, 330 + p * 130)
             sprite.draw()
 
+
 def show_log():
-    screen.draw.text(game_data.log, midbottom=(WIDTH/2, HEIGHT-50), color='black')
+    screen.draw.text(game_data.log, midbottom=(WIDTH / 2, HEIGHT - 50), color='black')
+
 
 def update():
     screen.clear()
@@ -492,6 +500,7 @@ def update():
     draw_deck()
     draw_players_hands()
     show_log()
+
 
 def on_mouse_down(pos):
     if game.player == game.game.current_player:
